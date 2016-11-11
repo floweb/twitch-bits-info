@@ -52,6 +52,9 @@ class TwitchBitsInfo(object):
         self.ws.on_open = self.on_open
         self.ws.run_forever()
 
+    def close(self):
+        self.ws.close()
+
     def get_channel_id(self):
         try:
             return self.ts.get_channel(self.channel_name).__dict__['twitchid']
