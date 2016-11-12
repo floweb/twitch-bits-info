@@ -1,8 +1,12 @@
+import os
+
 from twitchbitsinfo import TwitchBitsInfo
+
+os.environ["PYTWITCHER_CLIENT_ID"] = 'bc4ozy62dshy18hq1wp8nrhfz44rknd'
 
 if __name__ == "__main__":
     try:
-        ws = TwitchBitsInfo()
+        bits = TwitchBitsInfo()
     except KeyboardInterrupt:
-        ws.close()
-        print("Terminating...")
+        bits.close()
+        bits.log.info("Terminating...")
