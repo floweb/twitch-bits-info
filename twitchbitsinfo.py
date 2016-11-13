@@ -11,6 +11,8 @@ import webbrowser
 import pytwitcherapi
 import websocket
 
+from consolemini import ConsoleMini
+
 try:
     input = raw_input  # Fix PY2
 except NameError:
@@ -44,12 +46,12 @@ class TwitchBitsInfo(object):
         # and the OAuth token needed for Websocket requests
         self.twitch = pytwitcherapi.TwitchSession()
 
-        self.twitch_login()
-        self.access_token = self.twitch.token['access_token']
-        try:
-            self.channel_id
-        except AttributeError:
-            self.channel_id = self.get_channel_id()
+        # self.twitch_login()
+        # self.access_token = self.twitch.token['access_token']
+        # try:
+        #     self.channel_id
+        # except AttributeError:
+        #     self.channel_id = self.get_channel_id()
 
         # Websocket / PubSub:
         # This is use to get Twitch's Bits information stream
@@ -63,8 +65,10 @@ class TwitchBitsInfo(object):
             on_close=lambda _: self.log.info("Terminating...")
         )
 
+        self.cm = ConsoleMini(db_path=self.db_path, log=self.log)
+
         self.twitch.ws.on_open = self.on_open
-        self.twitch.ws.run_forever()
+        # self.twitch.ws.run_forever()
 
     def close(self):
         self.twitch.ws.close()
@@ -117,10 +121,12 @@ class TwitchBitsInfo(object):
         message_dict = json.loads(message)
         self.log.debug(message_dict)
 
-        if message_dict['type'] == 'MESSAGE':
-            # TODO: Do useful stuff
-            self.log.info(message_dict['chat_message'])
-            self.log.info(message_dict['user_name'])
+        if (message_dict['type'] == 'MESSAGE' and
+           "channel-bitsevents" in message_dict['data']['topic']):
+                # We got a new bits message... let's deal with it !
+                # Do useful stuff, like update trending games for ConsoleMini
+                self.cm.update_trending_games(message_dict['data']['message']['chat_message'],
+                                              message_dict['data']['message']['bits_used'])
 
     def on_open(self, ws):
         def run(*args):
@@ -178,6 +184,11 @@ class TwitchBitsInfo(object):
             self.channel_name
         except AttributeError:
             BadConfigurationException('channel_name')
+
+        try:
+            self.db_path
+        except AttributeError:
+            BadConfigurationException('db_path')
 
         try:
             self.ws_host
