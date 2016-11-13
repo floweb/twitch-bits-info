@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 try:
     import thread
 except ImportError:
@@ -39,7 +40,6 @@ class TwitchBitsInfo(object):
         self.twitch = pytwitcherapi.TwitchSession()
 
         self.twitch_login()
-        self.current_twitch_user = self.twitch.current_user
         self.channel_id = self.get_channel_id()
         self.access_token = self.twitch.token['access_token']
 
@@ -52,7 +52,7 @@ class TwitchBitsInfo(object):
             self.ws_host,
             on_message=self.on_message,
             on_error=self.on_error,
-            on_close=lambda ws: self.log.info("### closed ###")
+            on_close=lambda ws: self.log.info("Terminating...")
         )
 
         self.twitch.ws.on_open = self.on_open
@@ -72,12 +72,12 @@ class TwitchBitsInfo(object):
         url = self.twitch.get_auth_url()
         webbrowser.open(url)
 
-        input("Press ENTER when finished")
+        input("Press ENTER when Twitch account is connected and PyTwitcher authorized.")
 
         self.twitch.shutdown_login_server()
 
         if self.verbose:
-            self.log.debug(self.access_token)
+            self.log.debug('Login: {}, Token: {}'.format(self.twitch.current_user, self.twitch.token['access_token']))
         return self.twitch.authorized
 
     def on_error(self, ws, error):
@@ -101,11 +101,16 @@ class TwitchBitsInfo(object):
                     "bits_used": 120,
                     "total_bits_used": 620,
                     "context": "cheer"
-                    }
+                }
             }
         }
         """
-        self.log.info(message)
+        message_dict = json.loads(message)
+        self.log.debug(message_dict)
+
+        if message_dict['type'] == 'MESSAGE':
+            self.log.info(message_dict['chat_message'])
+            self.log.info(message_dict['user_name'])
 
     def on_open(self, ws):
         def run(*args):
@@ -152,12 +157,20 @@ class TwitchBitsInfo(object):
 
     def setup(self):
         try:
+            self.twitch_client_id
+        except AttributeError:
+            self.twitch_client_id = 'bc4ozy62dshy18hq1wp8nrhfz44rknd'
+        # pytwitcherapi.TwitchSession() fetch the Client ID from an envvar
+        os.environ["PYTWITCHER_CLIENT_ID"] = self.twitch_client_id
+
+        try:
             self.ws_host
         except AttributeError:
             self.ws_host = "wss://pubsub-edge.twitch.tv"
 
         try:
             self.channel_name
+            print(self.channel_name)
         except AttributeError:
             self.channel_name = "floweb"
 
