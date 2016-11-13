@@ -25,14 +25,19 @@ class TwitchGetDataException(Exception):
     pass
 
 
+class BadConfigurationException(Exception):
+    def __init__(self, missing_param, logger):
+        message = "You must set a {} in your config.ini".format(missing_param)
+        logger.critical(message)
+        super(BadConfigurationException, self).__init__(message)
+
+
 class TwitchBitsInfo(object):
 
     def __init__(self, **kwargs):
-        """
-        """
-        self.__dict__.update(kwargs)
         # Setup this class attributes, logs, etc...
-        self.setup()
+        self.__dict__.update(kwargs)
+        self._setup()
 
         # Standard REST API:
         # This is use to get channel_id from a channel_name,
@@ -40,8 +45,11 @@ class TwitchBitsInfo(object):
         self.twitch = pytwitcherapi.TwitchSession()
 
         self.twitch_login()
-        self.channel_id = self.get_channel_id()
         self.access_token = self.twitch.token['access_token']
+        try:
+            self.channel_id
+        except AttributeError:
+            self.channel_id = self.get_channel_id()
 
         # Websocket / PubSub:
         # This is use to get Twitch's Bits information stream
@@ -52,7 +60,7 @@ class TwitchBitsInfo(object):
             self.ws_host,
             on_message=self.on_message,
             on_error=self.on_error,
-            on_close=lambda ws: self.log.info("Terminating...")
+            on_close=lambda _: self.log.info("Terminating...")
         )
 
         self.twitch.ws.on_open = self.on_open
@@ -72,12 +80,13 @@ class TwitchBitsInfo(object):
         url = self.twitch.get_auth_url()
         webbrowser.open(url)
 
-        input("Press ENTER when Twitch account is connected and PyTwitcher authorized.")
+        input("Press ENTER when your Twitch account is connected and PyTwitcher is authorized.")
 
         self.twitch.shutdown_login_server()
 
         if self.verbose:
-            self.log.debug('Login: {}, Token: {}'.format(self.twitch.current_user, self.twitch.token['access_token']))
+            self.log.debug('Login with {} account, using auth token: {}'.format(
+                self.twitch.current_user, self.twitch.token['access_token']))
         return self.twitch.authorized
 
     def on_error(self, ws, error):
@@ -109,6 +118,7 @@ class TwitchBitsInfo(object):
         self.log.debug(message_dict)
 
         if message_dict['type'] == 'MESSAGE':
+            # TODO: Do useful stuff
             self.log.info(message_dict['chat_message'])
             self.log.info(message_dict['user_name'])
 
@@ -155,13 +165,19 @@ class TwitchBitsInfo(object):
     def ping(self):
         self.send_data({"type": "PING"})
 
-    def setup(self):
+    def _setup(self):
         try:
             self.twitch_client_id
         except AttributeError:
-            self.twitch_client_id = 'bc4ozy62dshy18hq1wp8nrhfz44rknd'
+            BadConfigurationException('twitch_client_id')
+
         # pytwitcherapi.TwitchSession() fetch the Client ID from an envvar
         os.environ["PYTWITCHER_CLIENT_ID"] = self.twitch_client_id
+
+        try:
+            self.channel_name
+        except AttributeError:
+            BadConfigurationException('channel_name')
 
         try:
             self.ws_host
@@ -169,19 +185,13 @@ class TwitchBitsInfo(object):
             self.ws_host = "wss://pubsub-edge.twitch.tv"
 
         try:
-            self.channel_name
-            print(self.channel_name)
-        except AttributeError:
-            self.channel_name = "floweb"
-
-        try:
             self.verbose
         except AttributeError:
             self.verbose = False
 
-        self.log = self.setup_log(self.verbose)
+        self.log = self._setup_log(self.verbose)
 
-    def setup_log(self, verbose):
+    def _setup_log(self, verbose):
         log = logging.getLogger(__name__)
         steam_handler = logging.StreamHandler()
 
