@@ -66,6 +66,7 @@ class TwitchBitsInfo(object):
         )
 
         self.cm = ConsoleMini(db_filepath=self.db_filepath, log=self.log)
+        self.cm.update_trending_games("abcd", 100)
 
         self.twitch.ws.on_open = self.on_open
         # self.twitch.ws.run_forever()
@@ -125,8 +126,11 @@ class TwitchBitsInfo(object):
            'channel-bitsevents' in message_dict['data']['topic']):
                 # We got a new bits message... let's deal with it !
                 # Do useful stuff, like update trending games for ConsoleMini
+                self.log.info('New cheer from {} !'.format(message_dict['data']['message']['user_name']))
+                self.log.info('Message: '.format(message_dict['data']['message']['chat_message']))
+                self.log.info('Bits cheered: '.format(message_dict['data']['message']['bits_used']))
                 self.cm.update_trending_games(message_dict['data']['message']['chat_message'],
-                                              message_dict['data']['message']['bits_used'])
+                                              int(message_dict['data']['message']['bits_used']))
 
     def on_open(self, ws):
         def run(*args):
