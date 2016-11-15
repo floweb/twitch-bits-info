@@ -65,7 +65,7 @@ class TwitchBitsInfo(object):
             on_close=lambda _: self.log.info("Terminating...")
         )
 
-        self.cm = ConsoleMini(db_path=self.db_path, log=self.log)
+        self.cm = ConsoleMini(db_filepath=self.db_filepath, log=self.log)
 
         self.twitch.ws.on_open = self.on_open
         # self.twitch.ws.run_forever()
@@ -122,7 +122,7 @@ class TwitchBitsInfo(object):
         self.log.debug(message_dict)
 
         if (message_dict['type'] == 'MESSAGE' and
-           "channel-bitsevents" in message_dict['data']['topic']):
+           'channel-bitsevents' in message_dict['data']['topic']):
                 # We got a new bits message... let's deal with it !
                 # Do useful stuff, like update trending games for ConsoleMini
                 self.cm.update_trending_games(message_dict['data']['message']['chat_message'],
@@ -186,9 +186,9 @@ class TwitchBitsInfo(object):
             BadConfigurationException('channel_name')
 
         try:
-            self.db_path
+            self.db_filepath
         except AttributeError:
-            BadConfigurationException('db_path')
+            BadConfigurationException('db_filepath')
 
         try:
             self.ws_host
