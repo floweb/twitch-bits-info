@@ -1,3 +1,2 @@
-backports.csv==1.0.2
 pytwitcherapi==0.9.1
 websocket-client==0.37.0
