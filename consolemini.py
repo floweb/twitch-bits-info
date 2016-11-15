@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import json
 import os
 
@@ -14,12 +13,13 @@ class ConsoleMini(object):
         new_data = self.read_db()
         new_data[game_id] = game_data
 
-        with open(self.db_path, 'r+') as f:
-            res = json.dump(new_data, f)
-        return res
+        with open(self.db_filepath, 'r+') as f:
+            json.dump(new_data, f, indent=2)
+
+        return self.read_db()
 
     def read_db(self, game_id=None):
-        with open(self.db_path, 'r') as f:
+        with open(self.db_filepath, 'r') as f:
             cm_data = json.load(f)
 
         if game_id and game_id == cm_data['game_id']:
@@ -33,7 +33,8 @@ class ConsoleMini(object):
         """
         Parse bits/chat message to detect which game_id was cheered
         """
-        game_id = chat_message
+        # if "CM" in chat_message:
+        game_id = ''
         return game_id
 
     def write_trending_files(self, trending_games):
@@ -42,21 +43,33 @@ class ConsoleMini(object):
         """
         for index, game in enumerate(trending_games):
             with open(os.path.join(self.db_dirname, 'consolemini.{}.txt'.format(index + 1)), 'w') as f:
-                f.write(trending_games[index])
+                f.write('{} : {} bits'.format(game['game_name'], game['total_bits']))
 
     def update_trending_games(self, chat_message, bits_used):
         # Parse bits/chat message to detect which game_id was cheered
         game_id = self.parse_chat_message(chat_message)
+        game_id = 'CM3'
 
         # Update ConsoleMini JSON file accordingly
-        game_data = self.read_db(game_id)
-        cm_data = self.write_db(game_id, game_data)
+        cm_data = self.read_db()
+        game_data = cm_data[game_id]
+        game_data['total_bits'] += int(bits_used)
+        self.log.info('{} has now {} bits !'.format(game_data['game_name'], game_data['total_bits']))
+        updated_data = self.write_db(game_id, game_data)
 
-        # cm_data is the updated & sorted ConsoleMini JSON file.
+        # updated_data is the now updated ConsoleMini JSON file.
         # We need to parse it and build a list following this model:
-        # ['Soleil: 300 bits', 'Ecco: 200 bits', 'Kid Chameleon: 100 bits']
-        cm_data
-        trending_games = []
+        # [{'total_bits': 700, 'game_name': 'Kid Chameleon'},
+        #  {'total_bits': 300, 'game_name': 'Rocket Knight Adventures'},
+        #  {'total_bits': 100, 'game_name': 'Ecco'}]
+
+        trending_games = sorted([updated_data[game]
+                                for game in updated_data
+                                if updated_data[game]['total_bits'] != 0],
+                                key=lambda k: k['total_bits'],
+                                reverse=True)[:3]
+        self.log.info('Here is the new 3 trending games :')
+        self.log.info(trending_games)
 
         # Finally update ConsoleMini trending games text files
         self.write_trending_files(trending_games)
