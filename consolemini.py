@@ -28,14 +28,30 @@ class ConsoleMini(object):
         elif not game_id:
             # In the case we didn't asked for a query, we just read the ConsoleMini JSON file
             return cm_data
+        else:
+            return None
 
     def parse_chat_message(self, chat_message):
         """
         Parse bits/chat message to detect which game_id was cheered
+        >>> chat_message = "Omg that baneling bust was Kreygasm CM16 cheer10 cheer10 cheer100"
+        >>> cm_index = chat_message.find('CM')
+        36
+        >>> chat_message[cm_index:].split()[0]
+        'CM16'
         """
-        # if "CM" in chat_message:
-        game_id = ''
-        return game_id
+        cm_index = chat_message.find('CM')
+        # rule_index = chat_message.find('R')
+
+        if cm_index:
+            # Detecting which game_id was cheered
+            try:
+                return chat_message[cm_index:].split()[0]
+            except IndexError:
+                return None
+        # elif rule_index:
+        else:
+            return None
 
     def write_trending_files(self, trending_games):
         """
@@ -48,10 +64,14 @@ class ConsoleMini(object):
     def update_trending_games(self, chat_message, bits_used):
         # Parse bits/chat message to detect which game_id was cheered
         game_id = self.parse_chat_message(chat_message)
-        game_id = 'CM3'
+        if not game_id:
+            return False
 
         # Update ConsoleMini JSON file accordingly
         cm_data = self.read_db()
+        if not cm_data:
+            return False
+
         game_data = cm_data[game_id]
         game_data['total_bits'] += int(bits_used)
         self.log.info('{} has now {} bits !'.format(game_data['game_name'], game_data['total_bits']))
