@@ -111,7 +111,7 @@ class TwitchBitsInfo(object):
                     "user_id": "...",
                     "channel_id": "...",
                     "time": "2015-12-19T16:39:57-08:00",
-                    "chat_message": "Omg that baneling bust was Kreygasm cheer10 cheer10 cheer100",
+                    "chat_message": "Omg that baneling bust was Kreygasm CM16 cheer10 cheer10 cheer100",
                     "bits_used": 120,
                     "total_bits_used": 620,
                     "context": "cheer"
