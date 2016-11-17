@@ -88,9 +88,8 @@ class TwitchBitsInfo(object):
 
         self.twitch.shutdown_login_server()
 
-        if self.verbose:
-            self.log.debug('Login with {} account, using auth token: {}'.format(
-                self.twitch.current_user, self.twitch.token['access_token']))
+        self.log.info('Login with {} account, using auth token: {}'.format(
+                      self.twitch.current_user, self.twitch.token['access_token']))
         return self.twitch.authorized
 
     def on_error(self, ws, error):
