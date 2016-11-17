@@ -119,21 +119,22 @@ class TwitchBitsInfo(object):
         }
         """
         message_dict = json.loads(message)
-        message_data = json.loads(message_dict['data']['message'])
-
         self.log.debug('message_dict:')
         self.log.debug(message_dict)
-        self.log.debug('message_data:')
-        self.log.debug(message_data)
 
         if (message_dict['type'] == 'MESSAGE' and
            'channel-bitsevents' in message_dict['data']['topic']):
-                # We got a new bits message... let's deal with it !
-                # Do useful stuff, like update trending games for ConsoleMini
-                self.log.info('New cheer from {} !'.format(message_data['user_name']))
-                self.log.info('Message: {}'.format(message_data['chat_message']))
-                self.log.info('Bits cheered: {}'.format(message_data['bits_used']))
-                self.cm.update_trending_games(message_data['chat_message'], int(message_data['bits_used']))
+
+            message_data = json.loads(message_dict['data']['message'])
+            self.log.debug('message_data:')
+            self.log.debug(message_data)
+
+            # We got a new bits message... let's deal with it !
+            # Do useful stuff, like update trending games for ConsoleMini
+            self.log.info('New cheer from {} !'.format(message_data['user_name']))
+            self.log.info('Message: {}'.format(message_data['chat_message']))
+            self.log.info('Bits cheered: {}'.format(message_data['bits_used']))
+            self.cm.update_trending_games(message_data['chat_message'], int(message_data['bits_used']))
 
     def on_open(self, ws):
         def run(*args):
