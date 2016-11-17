@@ -127,8 +127,8 @@ class TwitchBitsInfo(object):
                 # We got a new bits message... let's deal with it !
                 # Do useful stuff, like update trending games for ConsoleMini
                 self.log.info('New cheer from {} !'.format(message_dict['data']['message']['user_name']))
-                self.log.info('Message: '.format(message_dict['data']['message']['chat_message']))
-                self.log.info('Bits cheered: '.format(message_dict['data']['message']['bits_used']))
+                self.log.info('Message: {}'.format(message_dict['data']['message']['chat_message']))
+                self.log.info('Bits cheered: {}'.format(message_dict['data']['message']['bits_used']))
                 self.cm.update_trending_games(message_dict['data']['message']['chat_message'],
                                               int(message_dict['data']['message']['bits_used']))
 
