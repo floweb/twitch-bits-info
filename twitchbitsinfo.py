@@ -1,3 +1,10 @@
+from __future__ import print_function
+
+try:
+    import ConfigParser as configparser
+except ImportError:
+    import configparser
+from datetime import datetime
 import json
 import logging
 import os
@@ -13,11 +20,6 @@ import websocket
 
 from consolemini import ConsoleMini
 
-try:
-    input = raw_input  # Fix PY2
-except NameError:
-    pass
-
 
 class TwitchLoginException(Exception):
     pass
@@ -28,17 +30,19 @@ class TwitchGetDataException(Exception):
 
 
 class BadConfigurationException(Exception):
-    def __init__(self, missing_param, logger):
+    def __init__(self, missing_param):
         message = "You must set a {} in your config.ini".format(missing_param)
-        logger.critical(message)
+        print(message)
         super(BadConfigurationException, self).__init__(message)
 
 
 class TwitchBitsInfo(object):
 
-    def __init__(self, **kwargs):
-        # Setup this class attributes, logs, etc...
-        self.__dict__.update(kwargs)
+    def __init__(self):
+        config_dict = self._get_config()
+        # We need to get a dict from the 'config' section of the config file,
+        # to properly setup this class attributes like logs, etc...
+        self.__dict__.update(config_dict)
         self._setup()
 
         # Standard REST API:
@@ -52,6 +56,12 @@ class TwitchBitsInfo(object):
             self.channel_id
         except AttributeError:
             self.channel_id = self.get_channel_id()
+            self._write_config('channel_id', self.channel_id)
+
+        if self.first_run:
+            # First run was a success, we don't need to wait 45 seconds for user login
+            # Set first_run param to 0 (== False)
+            self._write_config('first_run', '0')
 
         # Websocket / PubSub:
         # This is use to get Twitch's Bits information stream
@@ -71,6 +81,7 @@ class TwitchBitsInfo(object):
         self.twitch.ws.run_forever()
 
     def close(self):
+        self.log.critical('Waiting for threads to go away...')
         self.twitch.ws.close()
 
     def get_channel_id(self):
@@ -84,12 +95,15 @@ class TwitchBitsInfo(object):
         url = self.twitch.get_auth_url()
         webbrowser.open(url)
 
-        input("Press ENTER when your Twitch account is connected and PyTwitcher is authorized.")
+        if self.first_run:
+            time.sleep(45)
+        else:
+            time.sleep(5)
 
         self.twitch.shutdown_login_server()
 
-        self.log.info('Login with {} account, using auth token: {}'.format(
-                      self.twitch.current_user, self.twitch.token['access_token']))
+        self.log.info('Logged in as: {}'.format(self.twitch.current_user))
+        self.log.debug('Using auth token: {}'.format(self.twitch.token['access_token']))
         return self.twitch.authorized
 
     def on_error(self, ws, error):
@@ -118,15 +132,13 @@ class TwitchBitsInfo(object):
         }
         """
         message_dict = json.loads(message)
-        self.log.debug('message_dict:')
-        self.log.debug(message_dict)
+        self.log.debug('message_dict: {}'.format(str(message_dict)))
 
         if (message_dict['type'] == 'MESSAGE' and
            'channel-bitsevents' in message_dict['data']['topic']):
 
             message_data = json.loads(message_dict['data']['message'])
-            self.log.debug('message_data:')
-            self.log.debug(message_data)
+            self.log.debug('message_data: {}'.format(str(message_data)))
 
             # We got a new bits message... let's deal with it !
             # Do useful stuff, like update trending games for ConsoleMini
@@ -203,22 +215,49 @@ class TwitchBitsInfo(object):
             self.ws_host = "wss://pubsub-edge.twitch.tv"
 
         try:
-            self.verbose
+            self.first_run = bool(int(self.first_run))
+        except AttributeError:
+            self.first_run = True
+
+        try:
+            self.verbose = bool(int(self.verbose))
         except AttributeError:
             self.verbose = False
 
-        self.log = self._setup_log(self.verbose)
+        self._setup_log(self.verbose)
 
     def _setup_log(self, verbose):
-        log = logging.getLogger(__name__)
+        self.log = logging.getLogger(__name__)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
         steam_handler = logging.StreamHandler()
+        steam_handler.setFormatter(formatter)
+
+        date_now = datetime.now().strftime("%Y-%m-%d")
+        file_handler = logging.FileHandler(filename='{}.log'.format(date_now))
+        file_handler.setFormatter(formatter)
 
         if verbose:
-            log.setLevel(logging.DEBUG)
+            self.log.setLevel(logging.DEBUG)
             steam_handler.setLevel(logging.DEBUG)
+            file_handler.setLevel(logging.DEBUG)
         else:
-            log.setLevel(logging.INFO)
+            self.log.setLevel(logging.INFO)
             steam_handler.setLevel(logging.INFO)
+            file_handler.setLevel(logging.INFO)
 
-        log.addHandler(steam_handler)
-        return log
+        self.log.addHandler(steam_handler)
+        self.log.addHandler(file_handler)
+
+        self.log.info('Starting app!')
+
+    def _get_config(self):
+        self.config = configparser.ConfigParser()
+        self.config.readfp(open('config.ini', 'r'))
+
+        return dict(self.config.items('config'))
+
+    def _write_config(self, option, value):
+        self.config.set('config', option, str(value))
+        with open('config.ini', 'r+') as f:
+            self.config.write(f)
