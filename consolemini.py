@@ -22,14 +22,10 @@ class ConsoleMini(object):
         with open(self.db_filepath, 'r') as f:
             cm_data = json.load(f)
 
-        if game_id and game_id == cm_data['game_id']:
-            # This allow us to query the ConsoleMini JSON file
-            return cm_data['game_id']
-        elif not game_id:
-            # In the case we didn't asked for a query, we just read the ConsoleMini JSON file
-            return cm_data
-        else:
-            return None
+        # This allow us to query the ConsoleMini JSON file,
+        # and in the case we didn't asked for a specific game_id:
+        # We just read the whole ConsoleMini JSON file
+        return cm_data[game_id] if game_id else cm_data
 
     def parse_chat_message(self, chat_message):
         """
