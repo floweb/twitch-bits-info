@@ -31,20 +31,32 @@ class ConsoleMini(object):
         """
         Parse bits/chat message to detect which game_id was cheered
         >>> chat_message = "Omg that baneling bust was Kreygasm CM16 cheer10 cheer10 cheer100"
-        >>> cm_index = chat_message.find('CM')
+        >>> cm_index = chat_message.lower().find('cm')
         36
-        >>> chat_message[cm_index:].split()[0]
-        'CM16'
+        In this case game_id will be 'CM16'.
+
+        >>> chat_message = "cheer500 Sed ut error sit voluptatem cm 10"
+        >>> cm_index = chat_message.lower().find('cm')
+        37
+        >>> message_data = chat_message[cm_index:].split()
+        ['cm', '10']
+        In this case game_id will be 'CM10'.
         """
-        cm_index = chat_message.find('CM')
-        # rule_index = chat_message.find('R')
+        cm_index = chat_message.lower().find('cm')
+        # rule_index = chat_message.lower().find('re')
 
         if cm_index:
             # Detecting which game_id was cheered
+            message_data = chat_message[cm_index:].split()
             try:
-                return chat_message[cm_index:].split()[0]
-            except IndexError:
+                game_id = message_data[0]
+                if len(message_data[0]) == 2 and int(message_data[1]):
+                    game_id = '{}{}'.format(message_data[0], message_data[1])
+            except (IndexError, ValueError):
                 return None
+
+            # Remember: game_ids in JSON are in UPPERCASE.
+            return game_id.upper()
         # elif rule_index:
         else:
             return None
