@@ -9,14 +9,21 @@ class ConsoleMini(object):
         self.__dict__.update(kwargs)
         self.db_dirname = os.path.dirname(self.db_filepath)
 
-    def write_db(self, game_id, game_data):
-        new_data = self.read_db()
-        new_data[game_id] = game_data
+    def write_db(self, game_id=None, current_game=None, new_data=None):
+        if not game_id and not current_game and not new_data:
+            return False
+
+        if game_id and current_game and not new_data:
+            new_data = self.read_db()
+            new_data[game_id] = current_game
 
         with open(self.db_filepath, 'r+') as f:
             json.dump(new_data, f, indent=2)
 
-        return self.read_db()
+        if new_data:
+            return True
+        else:
+            return self.read_db()
 
     def read_db(self, game_id=None):
         with open(self.db_filepath, 'r') as f:
@@ -63,41 +70,70 @@ class ConsoleMini(object):
 
     def write_trending_files(self, trending_games):
         """
-        Finally update ConsoleMini trending games (3) text files
+        Finally update ConsoleMini trending games (3) text files:
+        Example trending_games:
+        [{'total_bits': 300, 'game_name': 'Kid Chameleon', 'priority': 9},
+         {'total_bits': 300, 'game_name': 'Rocket Knight Adventures', 'priority': 10},
+         {'total_bits': 100, 'game_name': 'Ecco', 'priority': 10}]
         """
         for index, game in enumerate(trending_games):
             with open(os.path.join(self.db_dirname, 'consolemini.{}.txt'.format(index + 1)), 'w') as f:
                 f.write('{} : {} bits'.format(game['game_name'], game['total_bits']))
 
-    def update_trending_games(self, chat_message, bits_used):
-        # Parse bits/chat message to detect which game_id was cheered
-        game_id = self.parse_chat_message(chat_message)
-        if not game_id:
-            return False
+    def reset_priority(self, cm_data, total_bits):
+        """
+        To set our game new priority,
+        we need to detect every game which already has the same amount of bits than the current one,
+        and reset their priority to the default (which is 10).
+        """
+        games_to_reset = [game_id
+                          for game_id in cm_data
+                          if cm_data[game_id]['total_bits'] == total_bits]
 
-        # Update ConsoleMini JSON file accordingly
-        cm_data = self.read_db()
-        if not cm_data:
-            return False
+        for game_id in games_to_reset:
+            cm_data[game_id]['priority'] = 10
 
-        game_data = cm_data[game_id]
-        game_data['total_bits'] += int(bits_used)
-        self.log.info('{} has now {} bits !'.format(game_data['game_name'], game_data['total_bits']))
-        updated_data = self.write_db(game_id, game_data)
+        self.write_db(new_data=cm_data)
+
+    def update_trending_games(self, chat_message=None, bits_used=None):
+        if chat_message and bits_used:
+            # Parse bits/chat message to detect which game_id was cheered
+            game_id = self.parse_chat_message(chat_message)
+            if not game_id:
+                return False
+
+            # Update ConsoleMini JSON file accordingly
+            cm_data = self.read_db()
+            if not cm_data:
+                return False
+
+            current_game = cm_data[game_id]
+            current_game['total_bits'] += int(bits_used)
+            current_game['priority'] -= 1
+
+            # To set our game new priority,
+            # we need to detect every game which already has the same amount of bits than the current one,
+            # and reset their priority to the default (which is 10).
+            self.reset_priority(cm_data, current_game['total_bits'])
+
+            self.log.info('{} has now {} bits, and its is priority {} !'.format(
+                current_game['game_name'], current_game['total_bits'], current_game['priority']))
+            updated_data = self.write_db(game_id, current_game)
+        else:
+            updated_data = self.read_db()
 
         # updated_data is the now updated ConsoleMini JSON file.
         # We need to parse it and build a list following this model:
-        # [{'total_bits': 700, 'game_name': 'Kid Chameleon'},
-        #  {'total_bits': 300, 'game_name': 'Rocket Knight Adventures'},
-        #  {'total_bits': 100, 'game_name': 'Ecco'}]
+        # Firstly we sort by total_bits DESC, and then by priority ASC.
+        # [{'total_bits': 300, 'game_name': 'Kid Chameleon', 'priority': 9},
+        #  {'total_bits': 300, 'game_name': 'Rocket Knight Adventures', 'priority': 10},
+        #  {'total_bits': 100, 'game_name': 'Ecco', 'priority': 10}]
 
         trending_games = sorted([updated_data[game]
-                                for game in updated_data
-                                if updated_data[game]['total_bits'] != 0],
-                                key=lambda k: k['total_bits'],
-                                reverse=True)[:3]
-        self.log.info('Here is the new 3 trending games :')
-        self.log.info(trending_games)
+                                 for game in updated_data
+                                 if updated_data[game]['total_bits'] != 0],
+                                key=lambda k: (-k['total_bits'], k['priority']))[:3]
+        self.log.info('Here is the new 3 trending games : {}'.format(trending_games))
 
         # Finally update ConsoleMini trending games text files
         self.write_trending_files(trending_games)
