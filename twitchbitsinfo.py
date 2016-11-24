@@ -250,6 +250,7 @@ class TwitchBitsInfo(object):
         self.log.addHandler(file_handler)
 
         self.log.info('Starting app!')
+        return self.log
 
     def _get_config(self):
         self.config = configparser.ConfigParser()
