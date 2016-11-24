@@ -20,10 +20,7 @@ class ConsoleMini(object):
         with open(self.db_filepath, 'r+') as f:
             json.dump(new_data, f, indent=2)
 
-        if new_data:
-            return True
-        else:
-            return self.read_db()
+        return self.read_db()
 
     def read_db(self, game_id=None):
         with open(self.db_filepath, 'r') as f:
@@ -50,23 +47,21 @@ class ConsoleMini(object):
         In this case game_id will be 'CM10'.
         """
         cm_index = chat_message.lower().find('cm')
-        # rule_index = chat_message.lower().find('re')
 
-        if cm_index:
-            # Detecting which game_id was cheered
-            message_data = chat_message[cm_index:].split()
-            try:
-                game_id = message_data[0]
-                if len(message_data[0]) == 2 and int(message_data[1]):
-                    game_id = '{}{}'.format(message_data[0], message_data[1])
-            except (IndexError, ValueError):
-                return None
-
-            # Remember: game_ids in JSON are in UPPERCASE.
-            return game_id.upper()
-        # elif rule_index:
-        else:
+        if cm_index == -1:
             return None
+
+        # Detecting which game_id was cheered
+        message_data = chat_message[cm_index:].split()
+        try:
+            game_id = message_data[0]
+            if len(message_data[0]) == 2 and int(message_data[1]):
+                game_id = '{}{}'.format(message_data[0], message_data[1])
+        except (IndexError, ValueError):
+            return None
+
+        # Remember: game_ids in JSON are in UPPERCASE.
+        return game_id.upper()
 
     def write_trending_files(self, trending_games):
         """
@@ -82,8 +77,8 @@ class ConsoleMini(object):
 
     def reset_priority(self, cm_data, total_bits):
         """
-        To set our game new priority,
-        we need to detect every game which already has the same amount of bits than the current one,
+        To set our current game its new priority,
+        we need to detect every game which already has the same amount of bits,
         and reset their priority to the default (which is 10).
         """
         games_to_reset = [game_id
@@ -111,8 +106,8 @@ class ConsoleMini(object):
             current_game['total_bits'] += int(bits_used)
             current_game['priority'] -= 1
 
-            # To set our game new priority,
-            # we need to detect every game which already has the same amount of bits than the current one,
+            # To set our current game its new priority,
+            # we need to detect every game which already has the same amount of bits,
             # and reset their priority to the default (which is 10).
             self.reset_priority(cm_data, current_game['total_bits'])
 
