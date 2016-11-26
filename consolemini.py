@@ -18,7 +18,7 @@ class ConsoleMini(object):
             new_data[game_id] = current_game
 
         with open(self.db_filepath, 'w') as f:
-            json.dump(new_data, f, indent=2)
+            json.dump(new_data, f, indent=2, sort_keys=True)
 
         return self.read_db()
 
