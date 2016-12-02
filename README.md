@@ -1,5 +1,7 @@
 # Twitch Bits Info
 
+[![Build Status](https://travis-ci.org/floweb/twitch-bits-info.svg?branch=master)](https://travis-ci.org/floweb/twitch-bits-info) [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/qij6ovi1woxlnk6f/branch/master?svg=true)](https://ci.appveyor.com/project/floweb/twitch-bits-info/branch/master)
+
 Messing around with twitch APIs and Websockets for fun and ... proBits.
 
 This is still a big juicy **WIP**.
