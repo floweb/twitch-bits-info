@@ -9,7 +9,7 @@ import shutil
 
 import pytest
 
-from consolemini import ConsoleMini
+from consolemini import BadArgsException, ConsoleMini
 
 
 def restore_base_data():
@@ -49,8 +49,8 @@ def trending_files():
 class TestConsoleMini:
 
     def test_write_db_nope(self, cm):
-        nope = cm.write_db()
-        assert nope is False
+        with pytest.raises(BadArgsException):
+            cm.write_db()
 
     def test_write_db_ok(self, cm):
         game_id = 'CM5'  # Fatal Rewind
@@ -226,7 +226,7 @@ class TestConsoleMini:
         # In this particular case, reset_priority() should return None
         total_bits = 400
         this_should_be_none = cm.reset_priority(cm_data=cm_data, total_bits=total_bits)
-        assert this_should_be_none is None
+        assert this_should_be_none == cm_data
 
     def test_update_trending_games_nope(self, cm):
         nope = cm.update_trending_games(chat_message=1)

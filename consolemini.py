@@ -2,6 +2,13 @@ import json
 import os
 
 
+class BadArgsException(Exception):
+    def __init__(self, missing_params):
+        message = "You must set at least one of these arg for this function: {}".format(', '.join(missing_params))
+        print(message)
+        super(BadArgsException, self).__init__(message)
+
+
 class ConsoleMini(object):
 
     def __init__(self, **kwargs):
@@ -11,7 +18,7 @@ class ConsoleMini(object):
 
     def write_db(self, game_id=None, current_game=None, new_data=None):
         if not game_id and not current_game and not new_data:
-            return False
+            raise BadArgsException(['game_id', 'current_game', 'new_data'])
 
         if game_id and current_game and not new_data:
             new_data = self.read_db()
@@ -75,7 +82,7 @@ class ConsoleMini(object):
             with open(os.path.join(self.db_dirname, 'consolemini.{}.txt'.format(index + 1)), 'w') as f:
                 f.write('{} : {} bits'.format(game['game_name'], game['total_bits']))
 
-    def reset_priority(self, cm_data, total_bits):
+    def reset_priority(self, cm_data, total_bits, current_game_id=None):
         """
         To set our current game its new priority,
         we need to detect every game (including our current game)
@@ -84,17 +91,18 @@ class ConsoleMini(object):
         """
         games_to_reset = [game_id
                           for game_id in cm_data
-                          if cm_data[game_id]['total_bits'] == total_bits]
+                          if cm_data[game_id]['total_bits'] == total_bits and
+                          game_id != current_game_id]
 
-        if games_to_reset:
-            for game_id in games_to_reset:
-                cm_data[game_id]['priority'] = 10
+        for game_id in games_to_reset:
+            cm_data[game_id]['priority'] = 10
 
-            return self.write_db(new_data=cm_data)
-        else:
-            return None
+        return self.write_db(new_data=cm_data) if games_to_reset else cm_data
 
     def update_trending_games(self, chat_message=None, bits_used=None):
+        """
+        Main function for ConsoleMini.
+        """
         if chat_message and bits_used:
             # Parse bits/chat message to detect which game_id was cheered
             game_id = self.parse_chat_message(chat_message)
@@ -111,7 +119,7 @@ class ConsoleMini(object):
             # we need to detect every game (including our current game)
             # which already has the same amount of bits,
             # and reset their priority to the default (which is 10).
-            cm_data = self.reset_priority(cm_data, current_game['total_bits'])
+            cm_data = self.reset_priority(cm_data, current_game['total_bits'], game_id)
 
             cm_data[game_id] = current_game
 
