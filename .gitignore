@@ -91,3 +91,4 @@ ENV/
 # This project stuff
 config.ini
 tests/*.txt
+consolemini.*.txt
