@@ -180,11 +180,11 @@ class TestConsoleMini:
                 if index == 2:
                     assert f.read() == 'Ecco : 100 bits'
 
-    def test_write_trending_files_ok_remove(self, cm, trending_files):
-        self._write_trending_files_ok(cm, trending_files, remove=True)
-
     def test_write_trending_files_ok(self, cm, trending_files):
         self._write_trending_files_ok(cm, trending_files, remove=False)
+
+    def test_write_trending_files_ok_remove(self, cm, trending_files):
+        self._write_trending_files_ok(cm, trending_files, remove=True)
 
     def test_reset_priority_nope(self, cm):
         with pytest.raises(TypeError):
