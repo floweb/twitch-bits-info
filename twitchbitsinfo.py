@@ -2,16 +2,14 @@ from __future__ import print_function
 
 try:
     import ConfigParser as configparser
+    import thread
 except ImportError:
     import configparser
+    import _thread as thread
 from datetime import datetime
 import json
 import logging
 import os
-try:
-    import thread
-except ImportError:
-    import _thread as thread
 import time
 import webbrowser
 
@@ -45,6 +43,7 @@ class TwitchBitsInfo(object):
         self.__dict__.update(config_dict)
         self._setup()
 
+    def start(self):
         # Standard REST API:
         # This is use to get channel_id from a channel_name,
         # and the OAuth token needed for Websocket requests
@@ -80,7 +79,7 @@ class TwitchBitsInfo(object):
         self.twitch.ws.on_open = self.on_open
         self.twitch.ws.run_forever()
 
-    def close(self):
+    def shutdown(self):
         self.log.critical('Waiting for threads to go away...')
         self.twitch.ws.close()
 
@@ -227,7 +226,7 @@ class TwitchBitsInfo(object):
         self._setup_log(self.verbose)
 
     def _setup_log(self, verbose):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger('twitch_bits_info')
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
         steam_handler = logging.StreamHandler()
