@@ -4,8 +4,6 @@
 
 Messing around with twitch APIs and Websockets for fun and ... proBits.
 
-This is still a big juicy **WIP**.
-
 ## How to use
 
 Firstly, you have to declare your own app in your Twitch account.
