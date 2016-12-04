@@ -92,3 +92,4 @@ ENV/
 config.ini
 tests/*.txt
 consolemini.*.txt
+server/

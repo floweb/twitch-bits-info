@@ -28,6 +28,9 @@ def cm():
     log = logging.getLogger()
     db_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'consolemini.test.json')
     cm = ConsoleMini(db_filepath=db_filepath, log=log)
+    # api_url = 'http://localhost:3000'
+    # api_key = r'hGC2&cC97#nE]|Sm_5566230z6u61+b_9?Jn3k'
+    # cm = ConsoleMini(db_filepath=db_filepath, log=log, api_url=api_url, api_key=api_key)
     try:
         yield cm
     except:

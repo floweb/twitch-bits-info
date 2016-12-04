@@ -1,6 +1,8 @@
 import json
 import os
 
+import requests
+
 
 class BadArgsException(Exception):
     def __init__(self, missing_params):
@@ -20,9 +22,22 @@ class ConsoleMini(object):
         if not game_id and not current_game and not new_data:
             raise BadArgsException(['game_id', 'current_game', 'new_data'])
 
+        if new_data:
+            try:
+                for game_id in new_data:
+                    requests.post('{}/{}'.format(self.api_url, game_id),
+                                  json=new_data[game_id], headers={'X-CM-API-KEY': self.api_key})
+            except AttributeError:
+                pass
+
         if game_id and current_game and not new_data:
             new_data = self.read_db()
             new_data[game_id] = current_game
+            try:
+                requests.post('{}/{}'.format(self.api_url, game_id),
+                              json=current_game, headers={'X-CM-API-KEY': self.api_key})
+            except AttributeError:
+                pass
 
         with open(self.db_filepath, 'w') as f:
             json.dump(new_data, f, indent=2, sort_keys=True)

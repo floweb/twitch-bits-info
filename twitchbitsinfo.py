@@ -74,7 +74,8 @@ class TwitchBitsInfo(object):
             on_close=lambda _: self.log.info("Terminating...")
         )
 
-        self.cm = ConsoleMini(db_filepath=self.db_filepath, log=self.log)
+        self.cm = ConsoleMini(db_filepath=self.db_filepath, log=self.log,
+                              api_url=self.api_url, api_key=self.api_key)
 
         self.twitch.ws.on_open = self.on_open
         self.twitch.ws.run_forever()
