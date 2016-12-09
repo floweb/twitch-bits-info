@@ -6,7 +6,8 @@ import requests
 
 class BadArgsException(Exception):
     def __init__(self, missing_params):
-        message = "You must set at least one of these arg for this function: {}".format(', '.join(missing_params))
+        message = ("You must set at least one of these arg "
+                   "for this function: {}".format(', '.join(missing_params)))
         print(message)
         super(BadArgsException, self).__init__(message)
 
@@ -32,7 +33,13 @@ class ConsoleMini(object):
 
         if game_id and current_game and not new_data:
             new_data = self.read_db()
-            new_data[game_id] = current_game
+
+            item_to_remove = [item
+                              for item in new_data['games']
+                              if item['id'] == game_id][0]
+            new_data['games'].remove(item_to_remove)
+            new_data['games'].append(current_game)
+
             try:
                 requests.post('{}/{}'.format(self.api_url, game_id),
                               json=current_game, headers={'X-CM-API-KEY': self.api_key})
@@ -48,10 +55,20 @@ class ConsoleMini(object):
         with open(self.db_filepath, 'r') as f:
             cm_data = json.load(f)
 
-        # This allow us to query the ConsoleMini JSON file,
-        # and in the case we didn't asked for a specific game_id:
-        # We just read the whole ConsoleMini JSON file
-        return cm_data[game_id] if game_id else cm_data
+        # This allow us to query the ConsoleMini JSON file
+        if game_id:
+            try:
+                game_data = [game
+                             for game in cm_data['games']
+                             if game['id'] == game_id][0]
+            except (IndexError, KeyError):
+                return None
+
+            return game_data
+
+        # And in the case we didn't asked for a specific game_id,
+        # we just read the whole ConsoleMini JSON file
+        return cm_data
 
     def parse_chat_message(self, chat_message):
         """
@@ -104,15 +121,14 @@ class ConsoleMini(object):
         which already has the same amount of bits,
         and reset their priority to the default (which is 10).
         """
-        games_to_reset = [game_id
-                          for game_id in cm_data
-                          if cm_data[game_id]['total_bits'] == total_bits and
-                          game_id != current_game_id]
+        games_reseted = False
+        for index, _ in enumerate(cm_data['games']):
+            if (cm_data['games'][index]['total_bits'] == total_bits and
+               cm_data['games'][index]['id'] != current_game_id):
+                games_reseted = True
+                cm_data['games'][index]['priority'] = 10
 
-        for game_id in games_to_reset:
-            cm_data[game_id]['priority'] = 10
-
-        return self.write_db(new_data=cm_data) if games_to_reset else cm_data
+        return self.write_db(new_data=cm_data) if games_reseted else cm_data
 
     def update_trending_games(self, chat_message=None, bits_used=None):
         """
@@ -126,7 +142,9 @@ class ConsoleMini(object):
 
             # Update ConsoleMini JSON file accordingly
             cm_data = self.read_db()
-            current_game = cm_data[game_id]
+            current_game = [game
+                            for game in cm_data['games']
+                            if game['id'] == game_id][0]
             current_game['total_bits'] += int(bits_used)
             current_game['priority'] -= 1
 
@@ -136,7 +154,11 @@ class ConsoleMini(object):
             # and reset their priority to the default (which is 10).
             cm_data = self.reset_priority(cm_data, current_game['total_bits'], game_id)
 
-            cm_data[game_id] = current_game
+            item_to_remove = [item
+                              for item in cm_data['games']
+                              if item['id'] == game_id][0]
+            cm_data['games'].remove(item_to_remove)
+            cm_data['games'].append(current_game)
 
             self.log.info('{} has now {} bits, and its priority is {} !'.format(
                 current_game['game_name'], current_game['total_bits'], current_game['priority']))
@@ -154,8 +176,8 @@ class ConsoleMini(object):
         #  {'total_bits': 300, 'game_name': 'Rocket Knight Adventures', 'priority': 10},
         #  {'total_bits': 100, 'game_name': 'Ecco', 'priority': 10}]
 
-        trending_games = sorted([updated_data[game]
-                                 for game in updated_data],
+        trending_games = sorted([game
+                                 for game in updated_data['games']],
                                 key=lambda k: (-k['total_bits'], k['priority']))[:3]
 
         self.log.info('Here is the new 3 trending games : {}'.format(trending_games))

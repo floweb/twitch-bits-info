@@ -22,15 +22,27 @@ def restore_base_data():
                     dst=os.path.join(db_dirname, 'consolemini.test.json'))
 
 
+# TODO:
+# def pytest_generate_tests(metafunc):
+#     if 'cm' in metafunc.fixturenames:
+#         metafunc.parametrize("cm", ['api', 'no_api'], indirect=True)
+
+
 @pytest.fixture(scope="module")
-def cm():
+def cm(request):
     # dummy logger instance
     log = logging.getLogger()
     db_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'consolemini.test.json')
+
+    # TODO:
+    # if request.param == "api":
+    #     api_url = 'http://localhost:3000'
+    #     api_key = r'hGC2&cC97#nE]|Sm_556623e"AUbA89SAwQEcTJ%gllLFen*0z6u61+b_9?Jn3k'
+    #     cm = ConsoleMini(db_filepath=db_filepath, log=log, api_url=api_url, api_key=api_key)
+    # else:
+
     cm = ConsoleMini(db_filepath=db_filepath, log=log)
-    # api_url = 'http://localhost:3000'
-    # api_key = r'hGC2&cC97#nE]|Sm_5566230z6u61+b_9?Jn3k'
-    # cm = ConsoleMini(db_filepath=db_filepath, log=log, api_url=api_url, api_key=api_key)
+
     try:
         yield cm
     except:
@@ -57,17 +69,24 @@ class TestConsoleMini:
 
     def test_write_db_ok(self, cm):
         game_id = 'CM5'  # Fatal Rewind
-        current_game = {"total_bits": 1200, "game_name": "Fatal Rewind", "priority": 8}
+        current_game = {"id": "CM5", "total_bits": 1200,
+                        "game_name": "Fatal Rewind", "priority": 8}
         res = cm.write_db(game_id=game_id, current_game=current_game)
 
         assert isinstance(res, dict)
-        assert isinstance(res[game_id], dict)
-        assert isinstance(res[game_id]['total_bits'], int)
-        assert res[game_id]['total_bits'] == 1200
-        assert isinstance(res[game_id]['game_name'], basestring)
-        assert res[game_id]['game_name'] == 'Fatal Rewind'
-        assert isinstance(res[game_id]['priority'], int)
-        assert res[game_id]['priority'] == 8
+        assert isinstance(res['games'], list)
+
+        res_game = [game
+                    for game in res['games']
+                    if game['id'] == game_id][0]
+
+        assert isinstance(res_game, dict)
+        assert isinstance(res_game['total_bits'], int)
+        assert res_game['total_bits'] == 1200
+        assert isinstance(res_game['game_name'], basestring)
+        assert res_game['game_name'] == 'Fatal Rewind'
+        assert isinstance(res_game['priority'], int)
+        assert res_game['priority'] == 8
 
         # Revert consolemini.test.json to its original content
         restore_base_data()
@@ -75,21 +94,29 @@ class TestConsoleMini:
     def test_write_db_full_rewrite(self, cm):
         game_id = 'CM10'  # Maui Mallard
         new_data = cm.read_db()
-        new_data[game_id]['total_bits'] = 700
 
-        for game in new_data:
-            new_data[game]['priority'] = 11
+        # Just messing around with data...
+        for index, _ in enumerate(new_data['games']):
+            new_data['games'][index]['priority'] = 11
+            if new_data['games'][index]['id'] == game_id:
+                new_data['games'][index]['total_bits'] = 700
 
         res = cm.write_db(new_data=new_data)
 
         assert isinstance(res, dict)
-        assert isinstance(res[game_id], dict)
-        assert isinstance(res[game_id]['total_bits'], int)
-        assert res[game_id]['total_bits'] == 700
-        assert isinstance(res[game_id]['game_name'], basestring)
-        assert res[game_id]['game_name'] == 'Maui Mallard'
-        assert isinstance(res[game_id]['priority'], int)
-        assert res[game_id]['priority'] == 11
+        assert isinstance(res['games'], list)
+
+        res_game = [game
+                    for game in res['games']
+                    if game['id'] == game_id][0]
+
+        assert isinstance(res_game, dict)
+        assert isinstance(res_game['total_bits'], int)
+        assert res_game['total_bits'] == 700
+        assert isinstance(res_game['game_name'], basestring)
+        assert res_game['game_name'] == 'Maui Mallard'
+        assert isinstance(res_game['priority'], int)
+        assert res_game['priority'] == 11
 
         # Revert consolemini.test.json to its original content
         restore_base_data()
@@ -98,21 +125,30 @@ class TestConsoleMini:
         game_id = 'CM22'  # Ball Jacks
         res = cm.read_db()
         assert isinstance(res, dict)
-        assert isinstance(res[game_id], dict)
-        assert isinstance(res[game_id]['total_bits'], int)
-        assert isinstance(res[game_id]['game_name'], basestring)
-        assert res[game_id]['game_name'] == 'Ball Jacks'
-        assert isinstance(res[game_id]['priority'], int)
+        res_game = [game
+                    for game in res['games']
+                    if game['id'] == game_id][0]
+
+        assert isinstance(res_game, dict)
+        assert isinstance(res_game['total_bits'], int)
+        assert isinstance(res_game['game_name'], basestring)
+        assert res_game['game_name'] == 'Ball Jacks'
+        assert isinstance(res_game['priority'], int)
 
     def test_read_db_game_id(self, cm):
         game_id = 'CM8'  # Brett Hull Hockey 95
-        res = cm.read_db(game_id=game_id)
+        res_game = cm.read_db(game_id=game_id)
 
-        assert isinstance(res, dict)
-        assert isinstance(res['total_bits'], int)
-        assert isinstance(res['game_name'], basestring)
-        assert res['game_name'] == 'Brett Hull Hockey 95'
-        assert isinstance(res['priority'], int)
+        assert isinstance(res_game, dict)
+        assert isinstance(res_game['total_bits'], int)
+        assert isinstance(res_game['game_name'], basestring)
+        assert res_game['game_name'] == 'Brett Hull Hockey 95'
+        assert isinstance(res_game['priority'], int)
+
+    def test_read_db_game_id_nope(self, cm):
+        game_id = 'CM1337'  # NOPE !!!
+        res = cm.read_db(game_id=game_id)
+        assert res is None
 
     def test_parse_chat_message_nope(self, cm):
         with pytest.raises(TypeError):
@@ -202,7 +238,7 @@ class TestConsoleMini:
         with pytest.raises(TypeError):
             cm.reset_priority(cm_data='1, 2, 3')
 
-        with pytest.raises(TypeError):
+        with pytest.raises(KeyError):
             cm.reset_priority(cm_data={'toto': 'whoops'}, total_bits={'toto': 'whoops'})
 
         with pytest.raises(TypeError):
@@ -219,8 +255,12 @@ class TestConsoleMini:
 
         new_data = cm.reset_priority(cm_data=cm_data, total_bits=total_bits)
 
-        for game in games_to_test:
-            assert new_data[game]['priority'] == 10
+        res_games = [game
+                     for game in new_data['games']
+                     if game['id'] in games_to_test]
+
+        for game in res_games:
+            assert game['priority'] == 10
 
     def test_reset_priority_returns_none(self, cm):
         cm_data = cm.read_db()
@@ -262,9 +302,9 @@ class TestConsoleMini:
                 if index == 0:
                     assert f.read() == 'Kid Chameleon : 1600 bits'
                 if index == 1:
-                    assert f.read() == 'Fatal Rewind : 1200 bits'
+                    assert f.read() == 'Pete Sampras : 1400 bits'
                 if index == 2:
-                    assert f.read() == 'Maui Mallard : 700 bits'
+                    assert f.read() == 'Maui Mallard : 1400 bits'
 
     def test_update_trending_games_ok(self, cm, trending_files):
         ok_update_cm16 = cm.update_trending_games(
@@ -277,23 +317,23 @@ class TestConsoleMini:
                 if index == 0:
                     assert f.read() == 'Kid Chameleon : 1600 bits'
                 if index == 1:
-                    assert f.read() == 'Fatal Rewind : 1200 bits'
+                    assert f.read() == 'Pete Sampras : 1400 bits'
                 if index == 2:
-                    assert f.read() == 'Maui Mallard : 700 bits'
+                    assert f.read() == 'Maui Mallard : 1400 bits'
 
         ok_update_cm10 = cm.update_trending_games(
-            chat_message="cheer200 Sed ut error sit voluptatem cm10",
-            bits_used=200)
+            chat_message="cheer2200 Sed ut error sit voluptatem cm10",
+            bits_used=2200)
         assert ok_update_cm10 is True
 
         for index, trending_file in enumerate(trending_files):
             with open(trending_file) as f:
                 if index == 0:
-                    assert f.read() == 'Kid Chameleon : 1600 bits'
+                    assert f.read() == 'Maui Mallard : 3600 bits'
                 if index == 1:
-                    assert f.read() == 'Fatal Rewind : 1200 bits'
+                    assert f.read() == 'Kid Chameleon : 1600 bits'
                 if index == 2:
-                    assert f.read() == 'Maui Mallard : 900 bits'
+                    assert f.read() == 'Pete Sampras : 1400 bits'
 
         ok_update_cm_10 = cm.update_trending_games(
             chat_message="cheer500 Sed ut error sit voluptatem cm 10",
@@ -303,11 +343,11 @@ class TestConsoleMini:
         for index, trending_file in enumerate(trending_files):
             with open(trending_file) as f:
                 if index == 0:
-                    assert f.read() == 'Kid Chameleon : 1600 bits'
+                    assert f.read() == 'Maui Mallard : 4100 bits'
                 if index == 1:
-                    assert f.read() == 'Maui Mallard : 1400 bits'
+                    assert f.read() == 'Kid Chameleon : 1600 bits'
                 if index == 2:
-                    assert f.read() == 'Fatal Rewind : 1200 bits'
+                    assert f.read() == 'Pete Sampras : 1400 bits'
 
         ok_update_cm_22 = cm.update_trending_games(
             chat_message="cheer500 Wow! What a Save! Siiick! CM 22",
@@ -317,11 +357,11 @@ class TestConsoleMini:
         for index, trending_file in enumerate(trending_files):
             with open(trending_file) as f:
                 if index == 0:
-                    assert f.read() == 'Kid Chameleon : 1600 bits'
+                    assert f.read() == 'Maui Mallard : 4100 bits'
                 if index == 1:
-                    assert f.read() == 'Maui Mallard : 1400 bits'
+                    assert f.read() == 'Kid Chameleon : 1600 bits'
                 if index == 2:
-                    assert f.read() == 'Fatal Rewind : 1200 bits'
+                    assert f.read() == 'Pete Sampras : 1400 bits'
 
         ok_update_cm_17 = cm.update_trending_games(
             chat_message="cheer1400 You should read that linked article more closely, PogChamp cm 17",
@@ -331,11 +371,11 @@ class TestConsoleMini:
         for index, trending_file in enumerate(trending_files):
             with open(trending_file) as f:
                 if index == 0:
-                    assert f.read() == 'Kid Chameleon : 1600 bits'
+                    assert f.read() == 'Maui Mallard : 4100 bits'
                 if index == 1:
-                    assert f.read() == 'Pete Sampras : 1400 bits'
+                    assert f.read() == 'Pete Sampras : 2800 bits'
                 if index == 2:
-                    assert f.read() == 'Maui Mallard : 1400 bits'
+                    assert f.read() == 'Kid Chameleon : 1600 bits'
 
         # Bug found by monsieursapin
         ok_update_cm6 = cm.update_trending_games(
@@ -346,8 +386,8 @@ class TestConsoleMini:
         for index, trending_file in enumerate(trending_files):
             with open(trending_file) as f:
                 if index == 0:
-                    assert f.read() == 'Kid Chameleon : 1600 bits'
+                    assert f.read() == 'Maui Mallard : 4100 bits'
                 if index == 1:
-                    assert f.read() == 'Pete Sampras : 1400 bits'
+                    assert f.read() == 'Pete Sampras : 2800 bits'
                 if index == 2:
-                    assert f.read() == 'Maui Mallard : 1400 bits'
+                    assert f.read() == 'Kid Chameleon : 1600 bits'
