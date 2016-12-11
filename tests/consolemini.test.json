@@ -3,147 +3,176 @@
     {"id" : "CM1",
       "priority": 10,
       "game_name": "Soleil",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM10",
       "priority": 10,
       "game_name": "Maui Mallard",
-      "total_bits": 1400
+      "total_bits": 1400,
+      "finished": false
     },
     {"id" : "CM11",
       "priority": 10,
       "game_name": "Gunstar Heroes",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM12",
       "priority": 10,
       "game_name": "Battletoads",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM13",
       "priority": 10,
       "game_name": "The Adventures of Batman and Robin",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM14",
       "priority": 10,
       "game_name": "Castle of Illusion",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM15",
       "priority": 10,
       "game_name": "Bonanza Bros",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM16",
       "priority": 9,
       "game_name": "Dick Tracy",
-      "total_bits": 200
+      "total_bits": 200,
+      "finished": false
     },
     {"id" : "CM17",
       "priority": 9,
       "game_name": "Pete Sampras",
-      "total_bits": 1400
+      "total_bits": 1400,
+      "finished": false
     },
     {"id" : "CM18",
       "priority": 10,
       "game_name": "Castlevania Bloodlines",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM19",
       "priority": 10,
       "game_name": "Shining Force 2",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM2",
       "priority": 10,
       "game_name": "Rocket Knight Adventures",
-      "total_bits": 300
+      "total_bits": 300,
+      "finished": false
     },
     {"id" : "CM20",
       "priority": 10,
       "game_name": "Light Crusader",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM21",
       "priority": 10,
       "game_name": "Micro Machines",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM22",
       "priority": 9,
       "game_name": "Ball Jacks",
-      "total_bits": 500
+      "total_bits": 500,
+      "finished": false
     },
     {"id" : "CM23",
       "priority": 10,
       "game_name": "Sonic Spinball",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM24",
       "priority": 10,
       "game_name": "Rolling Thunder 2",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM25",
       "priority": 10,
       "game_name": "Batman Returns",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM26",
       "priority": 10,
       "game_name": "Alien 3",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM27",
       "priority": 10,
       "game_name": "Thunder Force 3",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM28",
       "priority": 10,
       "game_name": "Comix Zone",
-      "total_bits": 200
+      "total_bits": 200,
+      "finished": false
     },
     {"id" : "CM29",
       "priority": 10,
       "game_name": "Dynamite Headdy",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM3",
       "priority": 10,
       "game_name": "Kid Chameleon",
-      "total_bits": 1600
+      "total_bits": 1600,
+      "finished": false
     },
     {"id" : "CM30",
       "priority": 10,
       "game_name": "Last Battle",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM4",
       "priority": 10,
       "game_name": "Ecco",
-      "total_bits": 100
+      "total_bits": 100,
+      "finished": false
     },
     {"id" : "CM5",
       "priority": 10,
       "game_name": "Fatal Rewind",
-      "total_bits": 1200
+      "total_bits": 1200,
+      "finished": false
     },
     {"id" : "CM6",
       "priority": 9,
       "game_name": "The Revenge of Shinobi",
-      "total_bits": 300
+      "total_bits": 300,
+      "finished": false
     },
     {"id" : "CM7",
       "priority": 10,
       "game_name": "Bubsy",
-      "total_bits": 0
+      "total_bits": 0,
+      "finished": false
     },
     {"id" : "CM8",
       "priority": 10,
       "game_name": "Brett Hull Hockey 95",
-      "total_bits": 200
+      "total_bits": 200,
+      "finished": false
     },
     {"id" : "CM9",
       "priority": 10,
